@@ -15,4 +15,4 @@ COPY . .
 
 # Comando para rodar a aplicação
 # O host 0.0.0.0 torna o servidor acessível de fora do contêiner
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
