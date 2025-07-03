@@ -3,36 +3,38 @@ name: Deploy Nginx
 on:
   push:
     branches:
-    - 'main'
+      - 'main'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    steps:
+    env:
+      GOOGLE_PROJECT: ${{ secrets.GOOGLE_PROJECT }}
+      REGION: us-central1
+      SERVICE_NAME: nginx-service
+      IMAGE_URL: us-central1-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT }}/demo/nginx
 
-    - name: code checkout
+    steps:
+    - name: Checkout do código
       uses: actions/checkout@v2
 
-    - name: install the gcloud cli
+    - name: Instalar o gcloud CLI
       uses: google-github-actions/setup-gcloud@v0
       with:
         project_id: ${{ secrets.GOOGLE_PROJECT }}
         service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        install_components: 'gke-gcloud-auth-plugin'
         export_default_credentials: true
 
-    - name: build and push the docker image
-      env:
-        GOOGLE_PROJECT: ${{ secrets.GOOGLE_PROJECT }}
+    - name: Build e Push da imagem Docker
       run: |
         gcloud auth configure-docker us-central1-docker.pkg.dev
-        docker build -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT/demo/nginx:latest .
-        docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT/demo/nginx:latest
+        docker build -t $IMAGE_URL:latest .
+        docker push $IMAGE_URL:latest
 
-    - name: deploy to gke
-      env:
-        GOOGLE_PROJECT: ${{ secrets.GOOGLE_PROJECT }}
+    - name: Deploy no Cloud Run
       run: |
-        gcloud container clusters get-credentials autopilot-cluster-1 --region us-central1
-        sed -i "s/GOOGLE_PROJECT/$GOOGLE_PROJECT/g" resources.yaml
-        kubectl apply -f resources.yaml
+        gcloud run deploy $SERVICE_NAME \
+          --image $IMAGE_URL:latest \
+          --platform managed \
+          --region $REGION \
+          --allow-unauthenticated
