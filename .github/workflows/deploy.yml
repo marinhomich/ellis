@@ -36,10 +36,6 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Enable required APIs (first-time only)
-        run: |
-          gcloud services enable run.googleapis.com artifactregistry.googleapis.com
-
       - name: Create Artifact Registry repo if it doesn't exist
         run: |
           if ! gcloud artifacts repositories describe ${{ env.REPO_NAME }} \
