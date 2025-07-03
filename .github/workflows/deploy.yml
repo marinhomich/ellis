@@ -3,7 +3,7 @@ name: Deploy to Cloud Run
 env:
   SERVICE_NAME: custom-fastapi-service
   PROJECT_ID: blissful-star-464816-t6
-  DOCKER_IMAGE_URL: us-central1-docker.pkg.dev/blissful-star-464816-t6/demo
+  DOCKER_IMAGE_URL: us-central1-docker.pkg.dev/blissful-star-464816-t6/demo/nginx
 
 on:
   push:
