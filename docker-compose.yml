@@ -1,0 +1,17 @@
+# 'services' é onde definimos os contêineres que compõem nossa aplicação.
+services:
+  # O serviço da sua aplicação.
+  app:
+    # Constrói a imagem a partir do Dockerfile localizado no diretório atual ('.').
+    # O Dockerfile que você compartilhou será usado aqui.
+    build: .
+    container_name: minha-fastapi-app
+    # Mapeia a porta 8080 da sua máquina local para a porta 8000 do contêiner,
+    # que é a porta que o Uvicorn está usando, conforme seu Dockerfile.
+    ports:
+      - "8080:8000"
+    # Monta o diretório atual ('.') dentro do contêiner em '/app'.
+    # Isso é ótimo para desenvolvimento, pois o '--reload' do Uvicorn irá
+    # detectar as alterações no seu código local e reiniciar o servidor automaticamente.
+    volumes:
+      - .:/app
