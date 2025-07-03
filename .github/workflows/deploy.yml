@@ -1,40 +1,49 @@
-name: Deploy Nginx
+name: Deploy to Cloud Run
+
+env:
+  SERVICE_NAME: custom-fastapi-service
+  PROJECT_ID: blissful-star-464816-t6
+  DOCKER_IMAGE_URL: us-central1-docker.pkg.dev/blissful-star-464816-t6/demo
 
 on:
   push:
     branches:
-      - 'main'
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  deploy:
+  dockerize-and-deploy:
     runs-on: ubuntu-latest
-    env:
-      GOOGLE_PROJECT: ${{ secrets.GOOGLE_PROJECT }}
-      REGION: us-central1
-      SERVICE_NAME: nginx-service
-      IMAGE_URL: us-central1-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT }}/demo/nginx
 
     steps:
-    - name: Checkout do código
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Instalar o gcloud CLI
-      uses: google-github-actions/setup-gcloud@v0
-      with:
-        project_id: ${{ secrets.GOOGLE_PROJECT }}
-        service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        export_default_credentials: true
+      - name: Google Cloud Auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+          project_id: ${{ env.PROJECT_ID }}
 
-    - name: Build e Push da imagem Docker
-      run: |
-        gcloud auth configure-docker us-central1-docker.pkg.dev
-        docker build -t $IMAGE_URL:latest .
-        docker push $IMAGE_URL:latest
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
 
-    - name: Deploy no Cloud Run
-      run: |
-        gcloud run deploy $SERVICE_NAME \
-          --image $IMAGE_URL:latest \
-          --platform managed \
-          --region $REGION \
-          --allow-unauthenticated
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ env.DOCKER_IMAGE_URL }}:latest -f Dockerfile.prod .
+          docker push ${{ env.DOCKER_IMAGE_URL }}:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          echo SERVICE_NAME $SERVICE_NAME
+          gcloud run deploy $SERVICE_NAME \
+            --image ${{ env.DOCKER_IMAGE_URL }}:latest \
+            --platform managed \
+            --region us-east1 \
+            --allow-unauthenticated
